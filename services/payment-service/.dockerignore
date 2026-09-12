@@ -1,0 +1,13 @@
+
+bin/
+obj/
+.git/
+.gitignore
+.vscode/
+.idea/
+*.user
+*.suo
+README.md
+.env
+.env.*
+Dockerfile

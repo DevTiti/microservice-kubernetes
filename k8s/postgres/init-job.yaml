@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-init
+spec:
+  backoffLimit: 4
+
+  template:
+    metadata:
+      labels:
+        app: postgres-init
+
+    spec:
+      restartPolicy: OnFailure
+
+      containers:
+        - name: postgres-init
+          image: postgres:16
+
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+
+          command:
+            - /bin/bash
+            - -c
+            - |
+              until pg_isready -h postgres -p 5432 -U postgres; do
+                echo "Waiting for PostgreSQL..."
+                sleep 2
+              done
+
+              echo "PostgreSQL is ready."
+              echo "Running database initialization..."
+
+              psql \
+                -h postgres \
+                -U postgres \
+                -d postgres \
+                -v ON_ERROR_STOP=1 \
+                -f /bootstrap/bootstrap.sql
+
+              echo "Database initialization completed."
+
+          volumeMounts:
+            - name: bootstrap
+              mountPath: /bootstrap
+
+      volumes:
+        - name: bootstrap
+          configMap:
+            name: postgres-bootstrap

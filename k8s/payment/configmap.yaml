@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payment-service-config
+data:
+  ORDER_URL: "http://order-service:8084"
+  INVENTORY_URL: "http://inventory-service:8083"
+  NOTIFICATION_URL: "http://notification-service:8086"
