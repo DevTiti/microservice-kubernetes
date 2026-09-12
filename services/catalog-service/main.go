@@ -43,7 +43,7 @@ func main() {
 	mux.HandleFunc("/products", products)
 	mux.HandleFunc("/products/", productByID)
 
-	log.Println("catalog-service listening on http://localhost:8082")
+	log.Println("catalog-service v2 listening on http://localhost:8082")
 	log.Fatal(http.ListenAndServe(":8082", cors(mux)))
 }
 
