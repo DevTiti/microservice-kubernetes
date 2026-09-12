@@ -17,6 +17,8 @@ spec:
       labels:
         app: catalog-service
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: catalog-service
           image: catalog-service:v2
