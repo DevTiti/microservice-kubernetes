@@ -25,6 +25,13 @@ spec:
           imagePullPolicy: Never
           ports:
             - containerPort: 8081
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi  
           env:
             - name: AUTH_DB_URL
               value: jdbc:postgresql://postgres:5432/auth_db
@@ -62,3 +69,5 @@ spec:
             periodSeconds: 20
             timeoutSeconds: 2
             failureThreshold: 3
+
+          
