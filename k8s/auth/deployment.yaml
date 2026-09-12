@@ -19,28 +19,46 @@ spec:
     spec:
       containers:
         - name: auth-service
-
           image: auth-service:local
-
           # The image exists inside the Kind node,
           # so Kubernetes must not try Docker Hub.
           imagePullPolicy: Never
-
           ports:
             - containerPort: 8081
-
           env:
             - name: AUTH_DB_URL
               value: jdbc:postgresql://postgres:5432/auth_db
-
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
                   name: postgres-secret
                   key: MICROAPP_USER
-
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: postgres-secret
                   key: MICROAPP_PASSWORD
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            periodSeconds: 5
+            failureThreshold: 30
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 2
+            failureThreshold: 3

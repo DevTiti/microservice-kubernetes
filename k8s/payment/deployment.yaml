@@ -49,28 +49,3 @@ spec:
                 configMapKeyRef:
                   name: payment-service-config
                   key: NOTIFICATION_URL
-
-                startupProbe:
-                  httpGet:
-                    path: /health
-                    port: 8081
-                  periodSeconds: 5
-                  failureThreshold: 30
-
-                readinessProbe:
-                  httpGet:
-                    path: /health
-                    port: 8081
-                  initialDelaySeconds: 5
-                  periodSeconds: 10
-                  timeoutSeconds: 2
-                  failureThreshold: 3
-
-                livenessProbe:
-                  httpGet:
-                    path: /health
-                    port: 8081
-                  initialDelaySeconds: 10
-                  periodSeconds: 20
-                  timeoutSeconds: 2
-                  failureThreshold: 3
