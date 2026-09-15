@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: {{ .Values.services.notification.name }}
+
+spec:
+  selector:
+    app: {{ .Values.services.notification.name }}
+
+  ports:
+    - port: {{ .Values.services.notification.port }}
+      targetPort: {{ .Values.services.notification.port }}
+
+  type: ClusterIP

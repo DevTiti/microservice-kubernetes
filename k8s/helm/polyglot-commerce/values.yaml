@@ -1,0 +1,68 @@
+global:
+  namespace: microservices
+
+services:
+
+  auth:
+    name: auth-service
+    image:
+      repository: auth-service
+      tag: local
+    replicas: 1
+    port: 8081
+
+  catalog:
+    name: catalog-service
+    image:
+      repository: catalog-service
+      tag: local
+    replicas: 1
+    port: 8082
+
+  inventory:
+    name: inventory-service
+    image:
+      repository: inventory-service
+      tag: local
+    replicas: 1
+    port: 8083
+
+  order:
+    name: order-service
+    image:
+      repository: order-service
+      tag: local
+    replicas: 1
+    port: 8084
+
+  payment:
+    name: payment-service
+    image:
+      repository: payment-service
+      tag: local
+    replicas: 1
+    port: 8085
+
+  notification:
+    name: notification-service
+    image:
+      repository: notification-service
+      tag: local
+    replicas: 1
+    port: 8086
+
+  analytics:
+    name: analytics-service
+    image:
+      repository: analytics-service
+      tag: local
+    replicas: 1
+    port: 8087
+
+  frontend:
+    name: frontend
+    image:
+      repository: polyglot-commerce-ui
+      tag: local
+    replicas: 1
+    port: 80

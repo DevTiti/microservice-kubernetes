@@ -1,53 +1,73 @@
 apiVersion: apps/v1
 kind: Deployment
+
 metadata:
-  name: catalog-service
+  name: {{ .Values.services.catalog.name }}
+
 spec:
-  replicas: 1
+  replicas: {{ .Values.services.catalog.replicas }}
+
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 0
       maxSurge: 1
+
   selector:
     matchLabels:
-      app: catalog-service
+      app: {{ .Values.services.catalog.name }}
+
   template:
     metadata:
       labels:
-        app: catalog-service
+        app: {{ .Values.services.catalog.name }}
+
     spec:
       serviceAccountName: catalog-service
       automountServiceAccountToken: false
+
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
         runAsGroup: 65532
+
       containers:
         - name: catalog-service
-          image: catalog-service:v2
+
+          image: "{{ .Values.services.catalog.image.repository }}:{{ .Values.services.catalog.image.tag }}"
+
           imagePullPolicy: Never
+
+          ports:
+            - containerPort: {{ .Values.services.catalog.port }}
+
+          env:
+            - name: CATALOG_DB_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: database-urls
+                  key: CATALOG_DB_DSN
+
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
+
             capabilities:
               drop:
-               - ALL
-          ports:
-            - containerPort: 8082
+                - ALL
+
           resources:
             requests:
               cpu: 100m
               memory: 128Mi
+
             limits:
               cpu: 500m
               memory: 256Mi
-          env:
-          - name: CATALOG_DB_DSN
-            valueFrom:
-              secretKeyRef:
-                name: database-urls
-                key: CATALOG_DB_DSN
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
 
       volumes:
         - name: tmp

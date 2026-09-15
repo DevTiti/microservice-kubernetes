@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: {{ .Values.services.payment.name }}
+
+spec:
+  replicas: {{ .Values.services.payment.replicas }}
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+
+  selector:
+    matchLabels:
+      app: {{ .Values.services.payment.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.services.payment.name }}
+
+    spec:
+      serviceAccountName: payment-service
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: payment-service
+
+          image: "{{ .Values.services.payment.image.repository }}:{{ .Values.services.payment.image.tag }}"
+          imagePullPolicy: Never
+
+          ports:
+            - containerPort: {{ .Values.services.payment.port }}
+
+          env:
+            - name: PAYMENT_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-urls
+                  key: PAYMENT_DB_URL
+
+            - name: ORDER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-service-config
+                  key: ORDER_URL
+
+            - name: INVENTORY_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-service-config
+                  key: INVENTORY_URL
+
+            - name: NOTIFICATION_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-service-config
+                  key: NOTIFICATION_URL
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+
+            limits:
+              cpu: 500m
+              memory: 256Mi
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+      volumes:
+        - name: tmp
+          emptyDir: {}

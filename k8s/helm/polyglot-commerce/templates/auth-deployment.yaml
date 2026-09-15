@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: {{ .Values.services.auth.name }}
+
+spec:
+  replicas: {{ .Values.services.auth.replicas }}
+
+  strategy:
+    type: RollingUpdate
+
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+
+  selector:
+    matchLabels:
+      app: {{ .Values.services.auth.name }}
+
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.services.auth.name }}
+
+    spec:
+      serviceAccountName: auth-service
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+
+      containers:
+        - name: auth-service
+
+          image: "{{ .Values.services.auth.image.repository }}:{{ .Values.services.auth.image.tag }}"
+
+          imagePullPolicy: Never
+
+          ports:
+            - containerPort: {{ .Values.services.auth.port }}
+
+          env:
+            - name: AUTH_DB_URL
+              value: "jdbc:postgresql://postgres:5432/auth_db"
+
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: MICROAPP_USER
+
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: MICROAPP_PASSWORD
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+
+            capabilities:
+              drop:
+                - ALL
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          startupProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.services.auth.port }}
+            periodSeconds: 5
+            failureThreshold: 30
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.services.auth.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.services.auth.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 2
+            failureThreshold: 3
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+      volumes:
+        - name: tmp
+          emptyDir: {}

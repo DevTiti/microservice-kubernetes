@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: {{ .Values.services.inventory.name }}
+
+spec:
+  replicas: {{ .Values.services.inventory.replicas }}
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+
+  selector:
+    matchLabels:
+      app: {{ .Values.services.inventory.name }}
+
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.services.inventory.name }}
+
+    spec:
+      serviceAccountName: inventory-service
+      automountServiceAccountToken: false
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+
+      containers:
+        - name: inventory-service
+
+          image: "{{ .Values.services.inventory.image.repository }}:{{ .Values.services.inventory.image.tag }}"
+
+          imagePullPolicy: Never
+
+          ports:
+            - containerPort: {{ .Values.services.inventory.port }}
+
+          env:
+            - name: INVENTORY_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-urls
+                  key: INVENTORY_DB_URL
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+
+            capabilities:
+              drop:
+                - ALL
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+
+            limits:
+              cpu: 500m
+              memory: 256Mi
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+      volumes:
+        - name: tmp
+          emptyDir: {}
