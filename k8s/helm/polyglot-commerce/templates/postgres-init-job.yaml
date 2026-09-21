@@ -1,0 +1,84 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.databaseInitialization.jobName }}
+spec:
+  backoffLimit: {{ .Values.databaseInitialization.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.databaseInitialization.jobName }}
+    spec:
+      restartPolicy: OnFailure
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: {{ .Values.databaseInitialization.jobName }}
+          image: "{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PGHOST
+              value: {{ .Values.postgresql.name | quote }}
+            - name: PGPORT
+              value: {{ .Values.postgresql.port | quote }}
+            - name: PGDATABASE
+              value: {{ .Values.postgresql.database | quote }}
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.auth.secretName }}
+                  key: POSTGRES_USER
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.auth.secretName }}
+                  key: POSTGRES_PASSWORD
+            - name: MICROAPP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.auth.secretName }}
+                  key: MICROAPP_USER
+            - name: MICROAPP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.auth.secretName }}
+                  key: MICROAPP_PASSWORD
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              until pg_isready; do
+                echo "Waiting for PostgreSQL..."
+                sleep 2
+              done
+
+              psql \
+                -v ON_ERROR_STOP=1 \
+                -v app_user="$MICROAPP_USER" \
+                -v app_password="$MICROAPP_PASSWORD" \
+                -f /bootstrap/bootstrap.sql
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          volumeMounts:
+            - name: bootstrap
+              mountPath: /bootstrap
+              readOnly: true
+      volumes:
+        - name: bootstrap
+          configMap:
+            name: {{ .Values.databaseInitialization.configMapName }}

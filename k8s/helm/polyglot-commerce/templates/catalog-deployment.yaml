@@ -30,6 +30,8 @@ spec:
         runAsNonRoot: true
         runAsUser: 65532
         runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
 
       containers:
         - name: catalog-service
@@ -45,7 +47,7 @@ spec:
             - name: CATALOG_DB_DSN
               valueFrom:
                 secretKeyRef:
-                  name: database-urls
+                  name: {{ .Values.databaseConnections.secretName }}
                   key: CATALOG_DB_DSN
 
           securityContext:
@@ -64,6 +66,27 @@ spec:
             limits:
               cpu: 500m
               memory: 256Mi
+
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.services.catalog.port }}
+            periodSeconds: 2
+            failureThreshold: 30
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.services.catalog.port }}
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.services.catalog.port }}
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
 
           volumeMounts:
             - name: tmp

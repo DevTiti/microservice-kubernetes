@@ -1,6 +1,3 @@
-global:
-  namespace: microservices
-
 services:
 
   auth:
@@ -66,3 +63,43 @@ services:
       tag: local
     replicas: 1
     port: 80
+
+postgresql:
+  name: postgres
+  image:
+    repository: postgres
+    tag: "16"
+  port: 5432
+  database: postgres
+  auth:
+    secretName: postgres-secret
+    postgresUser: postgres
+    postgresPassword: postgres
+    applicationUser: microapp
+    applicationPassword: microapp123
+  persistence:
+    size: 5Gi
+    storageClass: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+databaseConnections:
+  secretName: database-urls
+
+databaseInitialization:
+  jobName: postgres-init
+  configMapName: postgres-bootstrap
+  backoffLimit: 6
+  databases:
+    - auth_db
+    - catalog_db
+    - inventory_db
+    - order_db
+    - payment_db
+    - notification_db
+    - analytics_db

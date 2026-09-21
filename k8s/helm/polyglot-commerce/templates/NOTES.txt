@@ -1,0 +1,16 @@
+Polyglot Commerce has been installed in namespace {{ .Release.Namespace }}.
+
+Check the release:
+  helm status {{ .Release.Name }} --namespace {{ .Release.Namespace }}
+
+Watch the PostgreSQL initialization Job:
+  kubectl get job {{ .Values.databaseInitialization.jobName }} --namespace {{ .Release.Namespace }} --watch
+
+Check all application Pods:
+  kubectl get pods --namespace {{ .Release.Namespace }}
+
+Access the frontend locally:
+  kubectl port-forward service/{{ .Values.services.frontend.name }} 8080:{{ .Values.services.frontend.port }} --namespace {{ .Release.Namespace }}
+
+Then open:
+  http://localhost:8080

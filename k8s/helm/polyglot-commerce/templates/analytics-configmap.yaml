@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.services.analytics.name }}-config
+data:
+  CATALOG_URL: "http://{{ .Values.services.catalog.name }}:{{ .Values.services.catalog.port }}"
+  INVENTORY_URL: "http://{{ .Values.services.inventory.name }}:{{ .Values.services.inventory.port }}"
+  ORDER_URL: "http://{{ .Values.services.order.name }}:{{ .Values.services.order.port }}"
+  PAYMENT_URL: "http://{{ .Values.services.payment.name }}:{{ .Values.services.payment.port }}"
+

@@ -28,6 +28,8 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: payment-service
 
@@ -41,7 +43,7 @@ spec:
             - name: PAYMENT_DB_URL
               valueFrom:
                 secretKeyRef:
-                  name: database-urls
+                  name: {{ .Values.databaseConnections.secretName }}
                   key: PAYMENT_DB_URL
 
             - name: ORDER_URL
@@ -77,6 +79,27 @@ spec:
             limits:
               cpu: 500m
               memory: 256Mi
+
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.services.payment.port }}
+            periodSeconds: 2
+            failureThreshold: 30
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.services.payment.port }}
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.services.payment.port }}
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
 
           volumeMounts:
             - name: tmp
